@@ -28,10 +28,10 @@ Claude Code            Python Hook              OPA Server
 
 ### 1. Start OPA
 
-Using Docker:
+Using podman:
 
 ```bash
-docker run -d --name opa -p 8181:8181 openpolicyagent/opa:latest run --server
+podman run -d --name opa -p 8181:8181 openpolicyagent/opa:latest run --server
 ```
 
 Or install OPA locally and run:
@@ -50,9 +50,46 @@ curl -X PUT http://localhost:8181/v1/policies/claudecode \
   -H "Content-Type: text/plain"
 ```
 
-### 3. Use with Claude Code
+### 3. Install the Hook
 
-The `.claude/settings.json` file registers the hook automatically when Claude Code runs in this project directory. No additional configuration is needed.
+#### Per-project (this repo only)
+
+The `.claude/settings.json` in this repo registers the hook automatically when Claude Code runs in this project directory. No additional steps needed.
+
+#### Global (all projects)
+
+To enforce the policy across all Claude Code sessions, copy the hook and settings to `~/.claude/`:
+
+```bash
+mkdir -p ~/.claude/hooks
+cp .claude/hooks/opa_hook.py ~/.claude/hooks/opa_hook.py
+```
+
+Then add the hook to `~/.claude/settings.json`. If the file doesn't exist, create it:
+
+```bash
+cat > ~/.claude/settings.json << 'EOF'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/.claude/hooks/opa_hook.py"
+          }
+        ]
+      }
+    ]
+  }
+}
+EOF
+```
+
+If you already have a `~/.claude/settings.json`, merge the `hooks` section into it.
+
+#### Configuration
 
 The hook connects to `http://localhost:8181` by default. Override with the `OPA_URL` environment variable:
 
