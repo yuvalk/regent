@@ -24,7 +24,43 @@ Claude Code            Python Hook              OPA Server
 | Task (subagents) | **ask** | Always escalated to user prompt |
 | Any other tool | **deny** | Default deny |
 
-## Setup
+## Container
+
+The easiest way to run Regent is with the provided container image, which bundles Claude Code, OPA, the policy, and the hook together.
+
+### Build
+
+```bash
+podman build -t regent .
+```
+
+### Run
+
+```bash
+podman run -it --rm \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  regent
+```
+
+Arguments are forwarded to `claude`:
+
+```bash
+podman run -it --rm \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  regent -p "explain this project"
+```
+
+To mount a project directory into the container:
+
+```bash
+podman run -it --rm \
+  -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
+  -v "$PWD":/work:z \
+  -w /work \
+  regent
+```
+
+## Manual Setup
 
 ### 1. Start OPA
 
@@ -137,4 +173,6 @@ echo '{"tool_name":"Bash","tool_input":{"command":"ls"},"cwd":"/tmp","session_id
   settings.json       # Claude Code hook registration
 opa/
   policy.rego         # OPA authorization policy
+Containerfile         # Container image definition
+entrypoint.sh         # Starts OPA then launches Claude Code
 ```
